@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>logicare — warranty checker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green-dark:   #1b5e3b;
+      --green-mid:    #2e7d52;
+      --green-light:  #e8f5ee;
+      --green-pale:   #f4faf7;
+      --white:        #ffffff;
+      --text-dark:    #0f1f17;
+      --text-muted:   #4a6358;
+      --border:       #d0e6da;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 400;
+      font-size: 1rem;
+      line-height: 1.8;
+      color: var(--text-dark);
+      background: var(--white);
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 100px;
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      align-items: center;
+      padding: 0 2%;
+      z-index: 100;
+    }
+
+    .nav-left   { display: flex; align-items: center; justify-content: center; }
+    .nav-center { display: flex; align-items: center; justify-content: center; }
+    .nav-right  { display: flex; align-items: center; justify-content: center; }
+
+    .nav-logo {
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+    }
+    .nav-logo img {
+      height: 90px;
+      width: auto;
+      max-width: 300px;
+      display: block;
+      object-fit: contain;
+    }
+
+    .btn-nav {
+      background: var(--green-dark);
+      color: var(--white);
+      border-radius: 50px;
+      padding: 0.5rem 1.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      text-decoration: none;
+      transition: background 0.2s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .btn-nav:hover { background: #154d30; }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 11rem 8% 5rem;
+      background: var(--white);
+      text-align: center;
+    }
+
+    .section-label {
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      color: var(--green-mid);
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .hero h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      color: var(--text-dark);
+      margin-bottom: 0.75rem;
+    }
+
+    .hero .hero-sub {
+      font-size: 1rem;
+      color: var(--text-muted);
+      font-weight: 300;
+      max-width: 480px;
+      margin: 0 auto 2.5rem;
+    }
+
+    /* ── CHECKER CARD ── */
+    .checker-card {
+      max-width: 700px;
+      margin: 0 auto;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2.75rem 3rem;
+      text-align: left;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .card-sub {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      font-weight: 400;
+      margin-bottom: 1.75rem;
+    }
+
+    .field-label {
+      font-size: 0.82rem;
+      color: var(--text-dark);
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .input-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    .sn-input {
+      width: 100%;
+      font-size: 1.05rem;
+      font-family: monospace;
+      font-weight: 600;
+      color: var(--text-dark);
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 0.9rem 1.1rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+    .sn-input:focus {
+      border-color: var(--green-dark);
+      box-shadow: 0 0 0 3px rgba(27,94,59,0.08);
+    }
+    .btn-check {
+      background: var(--green-dark);
+      color: var(--white);
+      border: none;
+      border-radius: 50px;
+      padding: 0.75rem 1.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+    .btn-check:hover { background: #154d30; }
+
+    .error-box {
+      background: #fdf0f0;
+      border: 1px solid #f0b0b0;
+      border-radius: 8px;
+      padding: 0.7rem 1rem;
+      font-size: 0.82rem;
+      color: #b91c1c;
+      margin-top: 0.5rem;
+      display: none;
+    }
+
+    /* ── RESULT ── */
+    .result-area { margin-top: 1.75rem; display: none; }
+
+    .status-bar {
+      border-radius: 10px;
+      padding: 0.9rem 1.2rem;
+      margin-bottom: 1.25rem;
+    }
+    .status-ok      { background: #edfaf4; border: 1px solid #a3d9bc; }
+    .status-warn    { background: #fdf8ec; border: 1px solid #e8c97a; }
+    .status-expired { background: #fdf0f0; border: 1px solid #f0b0b0; }
+
+    .status-title { font-size: 0.95rem; font-weight: 500; margin-bottom: 2px; }
+    .status-ok      .status-title { color: #1b5e3b; }
+    .status-warn    .status-title { color: #7a5200; }
+    .status-expired .status-title { color: #b91c1c; }
+
+    .status-desc { font-size: 0.82rem; }
+    .status-ok      .status-desc { color: #2e7d52; }
+    .status-warn    .status-desc { color: #92610a; }
+    .status-expired .status-desc { color: #c53030; }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 1.25rem;
+    }
+    .metric-box {
+      background: var(--green-pale);
+      border-radius: 10px;
+      padding: 0.8rem 1rem;
+    }
+    .m-label { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 3px; font-weight: 500; }
+    .m-value { font-size: 1rem; font-weight: 500; color: var(--text-dark); }
+
+    .progress-wrap { margin-bottom: 1.25rem; }
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+    }
+    .progress-track {
+      height: 7px;
+      background: var(--green-pale);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+    .fill-ok      { background: #1b5e3b; }
+    .fill-warn    { background: #BA7517; }
+    .fill-expired { background: #E24B4A; }
+
+    .info-table { border-top: 1px solid var(--border); }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8rem;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-key { color: var(--text-muted); }
+    .info-val { color: var(--text-dark); font-weight: 500; font-family: monospace; font-size: 0.78rem; }
+
+    .note-text {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 1rem;
+      line-height: 1.7;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── SERIAL GUIDE ── */
+    .guide-section {
+      padding: 5rem 8%;
+      background: var(--green-pale);
+    }
+    .guide-section .section-head {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    .guide-section h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      letter-spacing: -0.03em;
+      color: var(--text-dark);
+    }
+    .guide-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      max-width: 820px;
+      margin: 0 auto;
+    }
+    .guide-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.75rem;
+    }
+    .guide-card h3 {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+    .serial-visual {
+      font-family: monospace;
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      background: var(--green-pale);
+      border-radius: 8px;
+      padding: 0.7rem 1rem;
+      margin-bottom: 1rem;
+    }
+    .s-year { color: var(--green-dark); }
+    .s-week { color: var(--green-mid); }
+    .s-rest { color: var(--text-muted); }
+
+    .serial-legend { display: flex; flex-direction: column; gap: 0.5rem; }
+    .legend-item { display: flex; align-items: center; gap: 0.6rem; font-size: 0.8rem; color: var(--text-muted); }
+    .legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .dot-year { background: var(--green-dark); }
+    .dot-week { background: var(--green-mid); }
+    .dot-rest { background: var(--border); }
+
+    .week-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .week-table th {
+      text-align: left;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 0 0 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .week-table td {
+      padding: 4px 0;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-dark);
+    }
+    .week-table tr:last-child td { border-bottom: none; }
+    .week-table td:first-child { color: var(--text-muted); font-family: monospace; font-size: 0.75rem; }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 1.5rem 8%;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 300;
+    }
+
+    /* ── SCROLL REVEAL ── */
+    .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 640px) {
+      nav { padding: 0 5%; }
+      .hero { padding: 7rem 5% 3rem; }
+      .checker-card { padding: 1.5rem; }
+      .guide-section { padding: 3.5rem 5%; }
+      .guide-layout { grid-template-columns: 1fr; }
+      .metrics-grid { grid-template-columns: 1fr 1fr; }
+      footer { padding: 1.25rem 5%; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── NAV ── -->
+  <nav>
+    <div></div>
+    <div class="nav-left">
+      <a href="#" class="nav-logo">
+        <img src="o2h-logo.PNG" alt="logicare" />
+      </a>
+    </div>
+    <div></div>
+    <div></div>
+    <div class="nav-right">
+      <a href="#checker" class="btn-nav">check now →</a>
+    </div>
+  </nav>
+
+  <!-- ── HERO ── -->
+  <section class="hero" id="checker">
+    <div class="reveal">
+      <span class="section-label">logitech m90 · warranty tool</span>
+      <h1>Know your warranty status<br>in seconds</h1>
+      <p class="hero-sub">Enter your Logitech M90 serial number and instantly find out your manufacturing date, warranty expiry, and days of coverage remaining.</p>
+    </div>
+
+    <!-- CHECKER BOX -->
+    <div class="checker-card reveal">
+      <p class="card-title">🛡️ Logitech warranty checker</p>
+      <p class="card-sub">Enter the serial number from the sticker on the bottom of your mouse</p>
+
+      <p class="field-label">Serial number (S/N)</p>
+      <div class="input-row">
+        <input type="text" id="sn" class="sn-input" placeholder="e.g. 2239MR1042D9" maxlength="30" oninput="clearResult()" />
+        <button class="btn-check" onclick="check()">Check warranty</button>
+      </div>
+      <div id="error" class="error-box"></div>
+
+      <div id="result" class="result-area">
+        <div id="status-bar" class="status-bar">
+          <p id="status-title" class="status-title"></p>
+          <p id="status-desc"  class="status-desc"></p>
+        </div>
+        <div class="metrics-grid">
+          <div class="metric-box"><p class="m-label">Manufactured</p><p class="m-value" id="m-mfg"></p></div>
+          <div class="metric-box"><p class="m-label">Warranty ends</p><p class="m-value" id="m-end"></p></div>
+          <div class="metric-box"><p class="m-label">Days left</p><p class="m-value" id="m-days"></p></div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-label"><span>Warranty used</span><span id="p-pct"></span></div>
+          <div class="progress-track"><div id="progress-fill" class="progress-fill" style="width:0%"></div></div>
+        </div>
+        <div id="info-rows" class="info-table"></div>
+        <p class="note-text">ℹ️ Warranty is calculated from manufacturing date + ~3 month grace period (standard Logitech practice when no bill is available). The M90 has a 3-year limited hardware warranty.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SERIAL GUIDE ── -->
+  <section class="guide-section" id="guide">
+    <div class="section-head reveal">
+      <span class="section-label">serial number guide</span>
+      <h2>How to read your serial number</h2>
+    </div>
+    <div class="guide-layout">
+      <div class="guide-card reveal">
+        <h3>Format breakdown</h3>
+        <div class="serial-visual">
+          <span class="s-year">22</span><span class="s-week">39</span><span class="s-rest">MR1042D9</span>
+        </div>
+        <div class="serial-legend">
+          <div class="legend-item"><div class="legend-dot dot-year"></div><strong style="color:var(--text-dark);font-size:0.8rem;">22</strong>&nbsp;— Year of manufacture (2022)</div>
+          <div class="legend-item"><div class="legend-dot dot-week"></div><strong style="color:var(--text-dark);font-size:0.8rem;">39</strong>&nbsp;— Week of manufacture (Week 39 = late Sep)</div>
+          <div class="legend-item"><div class="legend-dot dot-rest"></div>Remaining digits — factory / unit identifiers</div>
+        </div>
+        <p style="font-size:0.78rem;color:var(--text-muted);margin-top:1rem;line-height:1.7;">⚠️ Manufacturing date ≠ purchase date. Logitech counts from manufacturing date + ~90 day grace period when no bill is available.</p>
+      </div>
+      <div class="guide-card reveal">
+        <h3>Week → Month reference</h3>
+        <table class="week-table">
+          <thead><tr><th>Weeks</th><th>Month</th></tr></thead>
+          <tbody>
+            <tr><td>01 – 04</td><td>January</td></tr>
+            <tr><td>05 – 08</td><td>February</td></tr>
+            <tr><td>09 – 13</td><td>March</td></tr>
+            <tr><td>14 – 17</td><td>April</td></tr>
+            <tr><td>18 – 22</td><td>May</td></tr>
+            <tr><td>23 – 26</td><td>June</td></tr>
+            <tr><td>27 – 30</td><td>July</td></tr>
+            <tr><td>31 – 35</td><td>August</td></tr>
+            <tr><td>36 – 39</td><td>September</td></tr>
+            <tr><td>40 – 44</td><td>October</td></tr>
+            <tr><td>45 – 48</td><td>November</td></tr>
+            <tr><td>49 – 52</td><td>December</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer>
+    Made by <strong style="color:var(--text-dark);font-weight:500;">Shubham Chudasma</strong>, Assistant-ICT
+  </footer>
+
+  <script>
+    function clearResult() {
+      document.getElementById('result').style.display = 'none';
+      document.getElementById('error').style.display  = 'none';
+    }
+
+    function parseSerial(sn) {
+      sn = sn.trim().toUpperCase();
+      if (sn.length < 4) return null;
+      const yr2 = parseInt(sn.substring(0, 2), 10);
+      const wk  = parseInt(sn.substring(2, 4), 10);
+      if (isNaN(yr2) || isNaN(wk) || wk < 1 || wk > 53) return null;
+      const year = 2000 + yr2;
+      const jan4 = new Date(year, 0, 4);
+      const startOfW1 = new Date(jan4);
+      startOfW1.setDate(jan4.getDate() - (jan4.getDay() || 7) + 1);
+      const mfgDate = new Date(startOfW1);
+      mfgDate.setDate(startOfW1.getDate() + (wk - 1) * 7);
+      if (mfgDate.getFullYear() < 2000 || mfgDate.getFullYear() > 2040) return null;
+      return mfgDate;
+    }
+
+    function fmtDate(d) {
+      return d.toLocaleDateString('en-IN', { year: 'numeric', month: 'short' });
+    }
+
+    function check() {
+      const sn    = document.getElementById('sn').value.trim();
+      const errEl = document.getElementById('error');
+      errEl.style.display = 'none';
+
+      if (!sn) {
+        errEl.textContent = 'Please enter a serial number.';
+        errEl.style.display = 'block'; return;
+      }
+      if (sn.length < 6) {
+        errEl.textContent = 'Serial number seems too short — should be at least 6 characters (e.g. 2239MR1042D9).';
+        errEl.style.display = 'block'; return;
+      }
+
+      const mfgDate = parseSerial(sn);
+      if (!mfgDate) {
+        errEl.textContent = 'Could not decode a manufacturing date. Enter the serial exactly as printed (e.g. 2239MR1042D9).';
+        errEl.style.display = 'block'; return;
+      }
+
+      const graceDays     = 90;
+      const warrantyYears = 3;
+      const startDate = new Date(mfgDate);
+      startDate.setDate(startDate.getDate() + graceDays);
+      const endDate = new Date(startDate);
+      endDate.setFullYear(endDate.getFullYear() + warrantyYears);
+
+      const today    = new Date(); today.setHours(0, 0, 0, 0);
+      const totalMs  = endDate - startDate;
+      const usedMs   = Math.max(0, today - startDate);
+      const daysLeft = Math.round((endDate - today) / (1000 * 60 * 60 * 24));
+      const pct      = Math.min(100, Math.round((usedMs / totalMs) * 100));
+
+      const sb     = document.getElementById('status-bar');
+      const stitle = document.getElementById('status-title');
+      const sdesc  = document.getElementById('status-desc');
+      const fill   = document.getElementById('progress-fill');
+
+      sb.className   = 'status-bar';
+      fill.className = 'progress-fill';
+
+      if (daysLeft > 180) {
+        sb.classList.add('status-ok');
+        stitle.textContent = '✓ Under warranty';
+        sdesc.textContent  = 'Your mouse is covered. ' + daysLeft.toLocaleString() + ' days remaining.';
+        fill.classList.add('fill-ok');
+      } else if (daysLeft > 0) {
+        sb.classList.add('status-warn');
+        stitle.textContent = '⚠ Warranty expiring soon';
+        sdesc.textContent  = 'Only ' + daysLeft + ' days left — raise a claim soon!';
+        fill.classList.add('fill-warn');
+      } else {
+        sb.classList.add('status-expired');
+        stitle.textContent = '✕ Warranty expired';
+        sdesc.textContent  = 'Expired ' + Math.abs(daysLeft) + ' days ago (' + fmtDate(endDate) + ').';
+        fill.classList.add('fill-expired');
+      }
+
+      document.getElementById('m-mfg').textContent  = fmtDate(mfgDate);
+      document.getElementById('m-end').textContent   = fmtDate(endDate);
+      document.getElementById('m-days').textContent  = daysLeft > 0 ? daysLeft.toLocaleString() : 'Expired';
+      document.getElementById('p-pct').textContent   = pct + '% used';
+      fill.style.width = pct + '%';
+
+      const yr2 = sn.substring(0, 2);
+      const wk  = sn.substring(2, 4);
+      document.getElementById('info-rows').innerHTML = `
+        <div class="info-row"><span class="info-key">Serial number</span><span class="info-val">${sn}</span></div>
+        <div class="info-row"><span class="info-key">Year decoded</span><span class="info-val">20${yr2}</span></div>
+        <div class="info-row"><span class="info-key">Week decoded</span><span class="info-val">Week ${parseInt(wk, 10)}</span></div>
+        <div class="info-row"><span class="info-key">Manufacturing date</span><span class="info-val">${mfgDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</span></div>
+        <div class="info-row"><span class="info-key">Warranty start (with grace)</span><span class="info-val">${startDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</span></div>
+        <div class="info-row"><span class="info-key">Warranty end</span><span class="info-val">${endDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</span></div>
+        <div class="info-row"><span class="info-key">Warranty type</span><span class="info-val">3-year limited hardware</span></div>
+      `;
+
+      document.getElementById('result').style.display = 'block';
+    }
+
+    document.getElementById('sn').addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+
+    // Scroll reveal
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+  </script>
+</body>
+</html>
